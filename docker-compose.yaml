@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:14
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    ports:
+      - "5439:5432"
+    env_file:
+      - "/home/parag/workspace/sparkeighteen/restaurant_python/restaurant/restaurant/envs/.env.dev" 
+
+  cache:
+    image: redis:6.0.16-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+
+  api:
+    build:
+        context: ./
+        dockerfile: Dockerfile
+    command: sh -c "ENV=${ENV} python manage.py runserver"
+    volumes:
+      - .:/restaurant
+    ports:
+      - "8000:8000"
