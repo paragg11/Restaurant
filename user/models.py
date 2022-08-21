@@ -23,9 +23,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # invited_otp_used = models.BooleanField(default=False)
 
     # objects = UsersManager()
-    # USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'email'
 
-    # REQUIRED_FIELDS = ['username', ]
+    REQUIRED_FIELDS = ['username', ]
 
     class Meta:
         verbose_name = 'User'
