@@ -59,7 +59,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_r!zr+_ld0z84h9$l6r!5g7))qlhe05%%)87h1bqu(8$%!-)37'
+SECRET_KEY = DJANGO_SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -126,7 +126,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'user',
-    'rest_framework_swagger',
+    'drf_yasg',
+    # 'rest_framework_swagger',
 
 ]
 
@@ -227,6 +228,3 @@ SWAGGER_SETTINGS = {
     },
 }
 
-TEMPLATE_DIRS = (
-    os.path.join(SETTINGS_PATH, 'templates'),
-)

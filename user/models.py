@@ -38,3 +38,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self):
         """Returns the User's full name."""
         return '%s %s' % (self.first_name, self.last_name)
+
+
+class Verification_Code(models.Model):
+    class Event(models.TextChoices):
+        SIGN_UP = 'Sign_Up'
+        FORGOT_PASSWORD = 'Forgot_Password'
+
+    event = models.CharField(max_length=30, choices=Event.choices)
+    user = models.ForeignKey(User, related_name="User_verification", on_delete=models.CASCADE)
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    expiry = models.TimeField(auto_now=False, null=True, blank=True)
+
