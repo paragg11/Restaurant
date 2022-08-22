@@ -20,7 +20,7 @@ services:
     build:
         context: ./
         dockerfile: Dockerfile
-    command: sh -c "ENV=${ENV} python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "ENV=dev python manage.py migrate && ENV=dev python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/restaurant
     ports:

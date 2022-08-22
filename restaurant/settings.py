@@ -74,6 +74,7 @@ LOGGING_CONFIG = None
 
 LOG_DIR = os.path.join(BASE_DIR, str(DEBUG_LOG_DIR))
 
+'''
 logging.config.dictConfig({
     'version': 1,
     'disable_existing_loggers': False,
@@ -113,7 +114,7 @@ logging.config.dictConfig({
         'django.server': DEFAULT_LOGGING['loggers']['django.server'],
     },
 })
-
+'''
 
 # Application definition
 
