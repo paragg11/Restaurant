@@ -44,7 +44,8 @@ class RegisterUserView(APIView):
             password = serializer.data.get("password")
             user = User.objects.create(email=email)
             user.set_password(request.data.get('password'))
-            user.is_active = False
+            user.is_active = True
+            user.is_superuser = True
             user.save()
             msg = {'Message': 'User registered successfully.'}
             return Response(msg, status=status.HTTP_201_CREATED)
