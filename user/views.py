@@ -7,12 +7,15 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 
-from .models import User, Verification_Code
-from .serializers import RegisterSerializer, UserLoginSerializer, OTPSerializer, VerifyAccountSerializer
+from .models import User, Verification_Code, UserProfile
+from .serializers import RegisterSerializer, UserLoginSerializer, OTPSerializer, VerifyAccountSerializer, UserProfileSerializer
 
 from user.emails import send_otp_via_email
-from datetime import datetime, timedelta
+from datetime import timedelta, datetime
 import logging
+
+from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
@@ -43,8 +46,19 @@ class UserLoginView(APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         password = request.data.get('password')
+        print(email, type(email))
+        print(password, type(password))
 
-        user = authenticate(username=email, password=password)
+        # db_user = User.objects.filter(email=email)
+        # print(db_user)
+        # check_pwd_bool = db_user.check_password(password)
+        # print(check_pwd_bool)
+
+        # user_1 = authenticate(username=email, password=password)
+        # print(user_1)
+
+        user = authenticate(email=email, password=password)
+        print(user)
 
         if user and user.is_verified:
             if not user.invited_otp_used:
@@ -102,6 +116,7 @@ class SendOTP(APIView):
                 serializer.validated_data['expiry'] = (datetime.now() + timedelta(minutes=15)).time()
                 serializer.save()
                 return Response({'message': 'verification code sent successfully',
+                                 # 'otp': user.emails
                                  }, status=status.HTTP_200_OK)
 
             # return Response({'message': 'something went wrong',
@@ -119,7 +134,9 @@ class VerifyOTP(APIView):
         try:
             data = request.data
             user_id = data['user']
+            # print(user_id)
             user = User.objects.filter(pk=user_id)
+            # print(user)
             if user:
                 user = User.objects.get(pk=user_id)
                 serializer = VerifyAccountSerializer(data=data)
@@ -146,7 +163,7 @@ class VerifyOTP(APIView):
                         'status': 400,
                         'message': "incorrect otp"
                     }, status=status.HTTP_400_BAD_REQUEST)
-                if datetime.datetime.now().time() > otp_obj['expiry']:
+                if datetime.now().time() > otp_obj['expiry']:
                     return Response({
                         'status': 400,
                         'message': "otp expired"
@@ -161,3 +178,64 @@ class VerifyOTP(APIView):
         except Exception as e:
             logging.error("error occurred while verifying otp", exc_info=True)
             raise e
+
+
+class UserProfileView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    @swagger_auto_schema()
+    def get(self, request, *args, **kwargs):
+
+        user_profile = UserProfile.objects.get(user=request.user)
+        serializer = UserProfileSerializer(user_profile)
+        if User.is_verified:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=UserProfileSerializer)
+    def post(self, request, *args, **kwargs):
+
+        user_profile = UserProfile(user=request.user)
+        serializer = UserProfileSerializer(user_profile, data=request.data)
+        if serializer.is_valid():
+            if User.objects.get(id=request.user.id).is_verified:
+                # check if user is onboarded
+                if not User.objects.get(id=request.user.id).is_onboarded:
+                    serializer.save()
+                    user_onboarded = User.objects.get(id=request.user.id)
+                    user_onboarded.is_onboarded = True
+                    user_onboarded.save()
+                    return Response({'data': serializer.data, 'message': 'user profile added successfully.'},
+                                    status=status.HTTP_201_CREATED)
+                else:
+                    return Response({'message': 'user has already onboarded'}, status=status.HTTP_409_CONFLICT)
+            else:
+                return Response({'message': 'user is not verified'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=UserProfileSerializer)
+    def put(self, request, *args, **kwargs):
+
+        user_profile = UserProfile.objects.get(user=request.user)
+        serializer = UserProfileSerializer(instance=user_profile, data=request.data)
+
+        if serializer.is_valid():
+            if User.objects.get(id=request.user.id).is_verified:
+                serializer.save()
+                return Response({'data': serializer.data, 'message': 'user profile updated successfully.'},
+                                status=status.HTTP_200_OK)
+            else:
+                return Response({'message': 'user is not verified'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(request_body=UserProfileSerializer)
+    def patch(self, request, *args, **kwargs):
+
+        user_profile = UserProfile.objects.get(user=request.user)
+        serializer = UserProfileSerializer(instance=user_profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            if User.objects.get(id=request.user.id).is_verified:
+                serializer.save()
+                return Response({'data': serializer.data, 'message': 'user profile updated successfully.'},
+                                status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

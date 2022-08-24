@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import UserManager
+from phonenumber_field.modelfields import PhoneNumberField
 
 import uuid
 
@@ -15,14 +17,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    # is_verified = models.BooleanField(default=False)
-    # is_onboarded = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
+    is_onboarded = models.BooleanField(default=False)
     # tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True)
-    # updated_at = models.DateTimeField(auto_now=True)
-    # invited_user = models.BooleanField(default=False)
-    # invited_otp_used = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    invited_user = models.BooleanField(default=False)
+    invited_otp_used = models.BooleanField(default=False)
 
-    # objects = UsersManager()
+    objects = UserManager()
     USERNAME_FIELD = 'email'
 
     REQUIRED_FIELDS = ['username', ]
@@ -49,4 +51,18 @@ class Verification_Code(models.Model):
     user = models.ForeignKey(User, related_name="User_verification", on_delete=models.CASCADE)
     otp = models.CharField(max_length=6, blank=True, null=True)
     expiry = models.TimeField(auto_now=False, null=True, blank=True)
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, related_name="User", on_delete=models.CASCADE, primary_key=True)
+    designation = models.CharField(max_length=50, blank=True, null=True)
+    location = models.CharField(max_length=100, blank=True, null=True)
+    contact_number = PhoneNumberField(blank=True, null=True)
+
+    # profile_picture = models.ImageField()
+
+    class Meta:
+        verbose_name = 'User Profile'
+        verbose_name_plural = 'User Profiles'
+
 
