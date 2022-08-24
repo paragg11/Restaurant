@@ -14,10 +14,23 @@ from user.emails import send_otp_via_email
 from datetime import timedelta, datetime
 import logging
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 from rest_framework.permissions import IsAuthenticated
 
+from rest_framework_simplejwt.tokens import RefreshToken
+
 # Create your views here.
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    refresh['email'] = user.email
+    # if user.tenant:
+    #     refresh['tenant_id'] = str(user.tenant.id)
+
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 
 class RegisterUserView(APIView):
@@ -99,6 +112,7 @@ class UserLoginView(APIView):
                 msg = {'message': "one time password used"}
                 return Response(msg, status=status.HTTP_401_UNAUTHORIZED)
         return Response({'message': 'not authorized'}, status=status.HTTP_404_NOT_FOUND)
+
 
 
 class SendOTP(APIView):

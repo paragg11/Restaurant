@@ -13,7 +13,7 @@ from .models import RestaurantMenu
 
 # Create your views here.
 
-class MenuDetail(APIview):
+class MenuDetail(APIView):
 
     @swagger_auto_schema(request_body=MenuSerializer)
     def post(self, request):
