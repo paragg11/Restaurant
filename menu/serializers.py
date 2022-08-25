@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+from django.core.exceptions import ValidationError
 from .models import RestaurantMenu
 
 class MenuSerializer(serializers.ModelSerializer):
@@ -16,3 +16,7 @@ class MenuSerializer(serializers.ModelSerializer):
         else:
             return serializers.ValidationError("enter veg or nonveg")
 
+    def validate_price(self, data):
+        if data < 1:
+            raise ValidationError('This number is lesser than 1')
+        return data
