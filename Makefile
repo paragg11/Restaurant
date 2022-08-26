@@ -22,7 +22,7 @@ install: ## Make venv and install requirements
 create_env: ## this will create the directories for the .env files
 	@if [ ! -d restaurant/envs ]; then mkdir -p restaurant/envs; fi
 	touch restaurant/envs/.env.$(ENV); \
-	echo -e "DJANGO_SECRET_KEY=\nDB_NAME=\nDB_USER=\nDB_PASSWORD=\nDB_HOST=\nDB_PORT=\nDEBUG=\nLOG_LEVEL=\nDEBUG_LOG_DIR=" > restaurant/envs/.env.$(ENV); \
+	echo -e "DJANGO_SECRET_KEY=\nDB_NAME=\nDB_USER=\nDB_PASSWORD=\nDB_HOST=\nDB_PORT=\nDEBUG=\nLOG_LEVEL=\nDEBUG_LOG_DIR=\nEMAIL_HOST_USER=\nEMAIL_HOST_PASSWORD=\nPOSTGRES_NAME=\nPOSTGRES_DB=\nPOSTGRES_USER=\nPOSTGRES_PASSWORD=\nENV=" > restaurant/envs/.env.$(ENV); \
 
 migrate: ## Make and run migrations
 	ENV=$(ENV) $(PYTHON) manage.py makemigrations

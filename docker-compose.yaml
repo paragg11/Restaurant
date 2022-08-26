@@ -8,7 +8,7 @@ services:
     ports:
       - "5439:5432"
     env_file:
-      - "/home/parag/workspace/sparkeighteen/restaurant_python/restaurant/restaurant/envs/.env.dev" 
+      - "/home/parag/Documents/workspace-sp18/Restaurant/restaurant/envs/.env.dev" 
 
   cache:
     image: redis:6.0.16-alpine
