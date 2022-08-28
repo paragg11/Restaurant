@@ -125,6 +125,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'user',
     'menu',
+    'ordering',
+    'billing',
     'drf_yasg',
     # 'rest_framework_swagger',
 

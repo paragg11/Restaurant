@@ -2,11 +2,12 @@ from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from .models import RestaurantMenu
 
+
 class MenuSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RestaurantMenu
-        fields = ['foodtype', 'name', 'price']
+        fields = ['foodtype', 'name', 'price', 'id']
 
     def validate_foodtype(self, request):
         if ("VEG") in request:
