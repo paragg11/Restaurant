@@ -1,14 +1,14 @@
 from django.shortcuts import render
 from drf_yasg.utils import swagger_auto_schema
 
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 
-from .models import User, Verification_Code, UserProfile
-from .serializers import RegisterSerializer, UserLoginSerializer, OTPSerializer, VerifyAccountSerializer, UserProfileSerializer
+from .models import User, VerificationCode
+from .serializers import RegisterSerializer, UserLoginSerializer, OTPSerializer, VerifyAccountSerializer, \
+    UserProfileSerializer, UserSerializer
 
 from user.emails import send_otp_via_email
 from datetime import timedelta, datetime
@@ -18,6 +18,7 @@ from django.contrib.auth import authenticate, login
 from rest_framework.permissions import IsAuthenticated
 
 from rest_framework_simplejwt.tokens import RefreshToken
+
 
 # Create your views here.
 
@@ -78,7 +79,7 @@ class UserLoginView(APIView):
             if not user.invited_otp_used:
                 login(request, user)
 
-                user_profile_data = UserProfile.objects.filter(user__email=email).values()
+                user_profile_data = User.objects.filter(email=email).values()
                 # Getting token for user
                 token = get_tokens_for_user(user)
                 if user.invited_user:
@@ -113,7 +114,6 @@ class UserLoginView(APIView):
                 msg = {'message': "one time password used"}
                 return Response(msg, status=status.HTTP_401_UNAUTHORIZED)
         return Response({'message': 'not authorized'}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 class SendOTP(APIView):
@@ -165,7 +165,7 @@ class VerifyOTP(APIView):
                 # user_email = user.email
                 pk = serializer.data['user']
                 otp = serializer.data['otp']
-                otp_obj = Verification_Code.objects.filter(user_id=pk, otp=otp)
+                otp_obj = VerificationCode.objects.filter(user_id=pk, otp=otp)
                 if otp_obj:
                     otp_obj = otp_obj.values()[0]
                 else:
@@ -198,40 +198,60 @@ class VerifyOTP(APIView):
 class UserProfileView(APIView):
     permission_classes = (IsAuthenticated,)
 
-    @swagger_auto_schema()
-    def get(self, request, *args, **kwargs):
+    # def get(self, request, *args, **kwargs):
+    #
+    #     user_profile = UserProfile.objects.get(user=request.user)
+    #     serializer = UserProfileSerializer(user_profile)
+    #     if User.is_verified:
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
-        user_profile = UserProfile.objects.get(user=request.user)
-        serializer = UserProfileSerializer(user_profile)
-        if User.is_verified:
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, pk):
+
+
+        try:
+            profile = User.objects.get(pk=pk)
+            # serializer = UserSerializer(instance=profile, data=profile)
+            # if serializer.is_valid():
+            #     return Response({'data': serializer.data, 'message': 'user profile updated successfully.'},
+            #                     status=status.HTTP_200_OK)
+            # else:
+            #     return Response({"user_id": "id does not exist"})
+
+            profile_dic = {"id": profile.id, "email": profile.email, "first name": profile.first_name,
+                           "last name": profile.last_name, "location": profile.location,
+                           "contact number": str(profile.contact_number)
+                           }
+            return Response({'data': profile_dic, 'message': 'user id found successfully.'},
+                            status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"user_id": "id does not exist"})
+
+    # @swagger_auto_schema(request_body=UserProfileSerializer)
+    # def post(self, request, *args, **kwargs):
+    #
+    #     user_profile = UserProfile(user=request.user)
+    #     serializer = UserProfileSerializer(user_profile, data=request.data)
+    #     if serializer.is_valid():
+    #         if User.objects.get(id=request.user.id).is_verified:
+    #             # check if user is onboarded
+    #             if not User.objects.get(id=request.user.id).is_onboarded:
+    #                 serializer.save()
+    #                 user_onboarded = User.objects.get(id=request.user.id)
+    #                 user_onboarded.is_onboarded = True
+    #                 user_onboarded.save()
+    #                 return Response({'data': serializer.data, 'message': 'user profile added successfully.'},
+    #                                 status=status.HTTP_201_CREATED)
+    #             else:
+    #                 return Response({'message': 'user has already onboarded'}, status=status.HTTP_409_CONFLICT)
+    #         else:
+    #             return Response({'message': 'user is not verified'}, status=status.HTTP_400_BAD_REQUEST)
+    #     return Response({'message': 'something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(request_body=UserProfileSerializer)
-    def post(self, request, *args, **kwargs):
+    def put(self, request, pk, *args, **kwargs):
 
-        user_profile = UserProfile(user=request.user)
-        serializer = UserProfileSerializer(user_profile, data=request.data)
-        if serializer.is_valid():
-            if User.objects.get(id=request.user.id).is_verified:
-                # check if user is onboarded
-                if not User.objects.get(id=request.user.id).is_onboarded:
-                    serializer.save()
-                    user_onboarded = User.objects.get(id=request.user.id)
-                    user_onboarded.is_onboarded = True
-                    user_onboarded.save()
-                    return Response({'data': serializer.data, 'message': 'user profile added successfully.'},
-                                    status=status.HTTP_201_CREATED)
-                else:
-                    return Response({'message': 'user has already onboarded'}, status=status.HTTP_409_CONFLICT)
-            else:
-                return Response({'message': 'user is not verified'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'message': 'something went wrong'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(request_body=UserProfileSerializer)
-    def put(self, request, *args, **kwargs):
-
-        user_profile = UserProfile.objects.get(user=request.user)
+        user_profile = User.objects.get(pk=pk)
         serializer = UserProfileSerializer(instance=user_profile, data=request.data)
 
         if serializer.is_valid():
@@ -244,9 +264,9 @@ class UserProfileView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(request_body=UserProfileSerializer)
-    def patch(self, request, *args, **kwargs):
+    def patch(self, request, pk, *args, **kwargs):
 
-        user_profile = UserProfile.objects.get(user=request.user)
+        user_profile = User.objects.get(pk=pk)
         serializer = UserProfileSerializer(instance=user_profile, data=request.data, partial=True)
         if serializer.is_valid():
             if User.objects.get(id=request.user.id).is_verified:

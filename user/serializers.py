@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
-from .models import User, Verification_Code, UserProfile
+from .models import User, VerificationCode
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -34,13 +34,13 @@ class OTPSerializer(serializers.ModelSerializer):
     expiry = serializers.TimeField(required=False, read_only=True)
 
     class Meta:
-        model = Verification_Code
+        model = VerificationCode
         fields = ['user', 'event', 'otp', 'expiry']
 
 
 class VerifyAccountSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Verification_Code
+        model = VerificationCode
         fields = ['user', 'otp']
 
     def validated(self, data):
@@ -50,43 +50,39 @@ class VerifyAccountSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'first_name', 'last_name')
+        fields = ('id', 'first_name', 'last_name', 'location', 'contact_number')
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    # user = UserSerializer()
 
     class Meta:
-        model = UserProfile
-        fields = ('user', 'designation', 'location', 'contact_number')
+        model = User
+        fields = ('location', 'contact_number')
 
-    def create(self, validated_data, *args, **kwargs):
+    # def create(self, validated_data, *args, **kwargs):
 
-        user_data = validated_data.pop('user')
-        user = User.objects.create(**user_data)
-        user_profile = UserProfile.objects.create(user=user, **validated_data)
-        return user_profile
+    #     user_data = validated_data.pop('user')
+    #     user = User.objects.create(**user_data)
+    #     user_profile = UserProfile.objects.create(user=user, **validated_data)
+    #     return user_profile
 
-    def update(self, instance, validated_data, *args, **kwargs):
-        nested_serializer = self.fields['user']
-        nested_instance = instance.user
-        nested_data = validated_data.pop('user')
-        nested_serializer.update(nested_instance, nested_data)
-        return super(UserProfileSerializer, self).update(instance, validated_data)
+    # def update(self, instance, validated_data, *args, **kwargs):
+    #     nested_serializer = self.fields['user']
+    #     nested_instance = instance.user
+    #     nested_data = validated_data.pop('user')
+    #     nested_serializer.update(nested_instance, nested_data)
+    #     return super(UserProfileSerializer, self).update(instance, validated_data)
 
     def validate(self, data):
 
         if data.get('contact_number') == "":
             raise serializers.ValidationError("Contact number should not be empty.")
-        if data.get('designation') == "":
-            raise serializers.ValidationError("Designation should not be empty.")
         if data.get('location') == "":
             raise serializers.ValidationError("Location should not be empty.")
         if not self.partial:
             if data.get('contact_number') is None:
                 raise serializers.ValidationError("Contact number is required.")
-            if data.get('designation') is None:
-                raise serializers.ValidationError("Designation is required.")
             if data.get('location') is None:
                 raise serializers.ValidationError("Location is required.")
 

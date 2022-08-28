@@ -10,7 +10,9 @@ urlpatterns = [
     path('login', UserLoginView.as_view(), name='login-user'),
     path('generate-otp', SendOTP.as_view(), name='generate-otp'),
     path('verify-otp', VerifyOTP.as_view(), name='verify-otp'),
-    path('profile', UserProfileView.as_view(), name='user-profile-detail'),
+    path('profile/<int:pk>', UserProfileView.as_view(), name='user-profile-detail'),
+    # path('profile/<int:pk>', UserProfileView.get(pk=pk).as_view(), name='user-profile-detail')
 
+    
 
 ]
